@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Subdomain Scraping Tool
+
+TARGET_DOMAIN=$1
+OUTPUT_FILE="subdomains_$TARGET_DOMAIN.txt"
+
+# Step 1: Use amass to scrape subdomains
+echo "[*] Running amass enum for subdomain scraping..."
+amass enum -passive -d $TARGET_DOMAIN -o amass_subdomains.txt
+
+# Step 2: Use subfinder to find subdomains
+echo "[*] Running subfinder..."
+subfinder -d $TARGET_DOMAIN -o subfinder_subdomains.txt
+
+# Step 3: Use shodan for subdomain discovery
+echo "[*] Running shodan for subdomain discovery..."
+shodan search "hostname:$TARGET_DOMAIN" --limit 1000 > shodan_subdomains.txt
+
+# Step 4: Scrape GitHub for subdomains using the provided script
+echo "[*] Running github-subdomains.py..."
+python3 github-subdomains.py -d $TARGET_DOMAIN -o github_subdomains.txt
+
+# Merge results
+cat amass_subdomains.txt subfinder_subdomains.txt shodan_subdomains.txt github_subdomains.txt | sort -u > $OUTPUT_FILE
+echo "[*] Subdomain scraping complete! Results saved to $OUTPUT_FILE."
